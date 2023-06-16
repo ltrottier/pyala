@@ -138,8 +138,8 @@ class Transpiler:
         elif isinstance(node, ast.ListComp):
             elt = self.translate_expr(node.elt)
             gen = [self.translate_comprehension(g, indent + "  ") for g in node.generators]
-            gen_str = '\n'.join(gen)
-            expr_str = f"for {{\n{gen_str}\n{indent}}} yield {elt}" 
+            gen_str = "\n".join(gen)
+            expr_str = f"for {{\n{gen_str}\n{indent}}} yield {elt}"
         elif isinstance(node, ast.SetComp):
             raise NotImplementedError
         elif isinstance(node, ast.DictComp):
@@ -158,13 +158,13 @@ class Transpiler:
             left = self.translate_expr(node.left)
             ops = [self.translate_cmpop(o) for o in node.ops]
             comparators = [self.translate_expr(c) for c in node.comparators]
-            expr_list = []
+            expr_list: list[str] = []
             for op, right in zip(ops, comparators):
                 if len(expr_list) != 0:
-                    expr_list.append('&&')
+                    expr_list.append("&&")
                 expr_list.append(f"({left} {op} {right})")
                 left = right
-            expr_str = ' '.join(expr_list)
+            expr_str = " ".join(expr_list)
         elif isinstance(node, ast.Call):
             raise NotImplementedError
         elif isinstance(node, ast.FormattedValue):
@@ -191,10 +191,10 @@ class Transpiler:
             self._names[node.id] = self._names.get(node.id, 0) + 1
             expr_str = node.id
         elif isinstance(node, ast.List):
-            expr_str = ', '.join([self.translate_expr(e) for e in node.elts])
+            expr_str = ", ".join([self.translate_expr(e) for e in node.elts])
             expr_str = f"scala.collection.mutable.Buffer({expr_str})"
         elif isinstance(node, ast.Tuple):
-            expr_str = ', '.join([self.translate_expr(e) for e in node.elts])
+            expr_str = ", ".join([self.translate_expr(e) for e in node.elts])
             expr_str = f"({expr_str})"
         # can appear only in Subscript
         elif isinstance(node, ast.Slice):
@@ -253,7 +253,7 @@ class Transpiler:
             op_str = f"scala.math.floorDiv({left}.toLong, {right}.toLong)"
         else:
             raise ValueError(f"Invalid node {node} for operator")
-    
+
         return f"({op_str})"
 
     def translate_unaryop(self, node, operand):
@@ -267,7 +267,7 @@ class Transpiler:
             return f"-({operand})"
         else:
             raise ValueError(f"Invalid node {node} for unaryop")
-    
+
     def translate_cmpop(self, node):
         cmpop_str = ""
         if isinstance(node, ast.Eq):
@@ -291,18 +291,18 @@ class Transpiler:
         else:
             raise ValueError(f"Invalid node {node} for cmpop")
         return cmpop_str
-    
-    def translate_comprehension(self, node, indent = ""):
+
+    def translate_comprehension(self, node, indent=""):
         target = self.translate_expr(node.target)
         iterr = self.translate_expr(node.iter)
         ifs = [self.translate_expr(i) for i in node.ifs]
         ifs = " && ".join(ifs)
         c_str = f"{indent}{target} <- {iterr} if ({ifs})"
         return c_str
-    
+
     def translate_excepthandler(self, node):
         raise NotImplementedError
-    
+
     def translate_arguments(self, node):
         return ",".join([self.translate_arg(arg) for arg in node.args])
 
@@ -312,13 +312,13 @@ class Transpiler:
 
     def translate_keyword(self, node):
         raise NotImplementedError
-    
+
     def translate_alias(self, node):
         raise NotImplementedError
-    
+
     def translate_match_case(self, node):
         raise NotImplementedError
-    
+
     def translate_pattern(self, node):
         if isinstance(node, ast.MatchValue):
             raise NotImplementedError
@@ -340,11 +340,10 @@ class Transpiler:
             raise ValueError(f"Invalid node {node} for pattern")
 
     def translate_type_ignore(self, node):
-        raise NotImplementedError  
-        
+        raise NotImplementedError
+
     def translate_annotation(self, node):
         return {"int": "Integer", "float": "Double", "bool": "Boolean", "str": "String"}[node.id]
 
-    
 
 __all__ = ["to_object", "to_str"]

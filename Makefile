@@ -15,7 +15,10 @@ build:
 	. venv/bin/activate
 	poetry build
 
-transpile-tests:
+clean-scala-main:
+	rm scala/src/main/scala/*.scala
+
+transpile-tests: clean-scala-main
 	. venv/bin/activate
 	poetry run python scripts/transpile_tests.py
 
