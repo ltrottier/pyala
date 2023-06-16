@@ -54,7 +54,6 @@ module Python
 
           -- BoolOp() can use left & right?
     expr =
-         | Dict(expr* keys, expr* values)
          | Set(expr* elts)
          | ListComp(expr elt, comprehension* generators)
          | SetComp(expr elt, comprehension* generators)
