@@ -1,5 +1,5 @@
 # pyala
-Python to Scala Transpiler
+Python 3.10 to Scala 2.13 Transpiler
 
 > **Warning**
 > Project under development. Not available right now. Come back later.

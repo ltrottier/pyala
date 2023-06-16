@@ -11,15 +11,17 @@ venv:
 	pip install poetry
 	poetry install
 
-
 build:
 	. venv/bin/activate
 	poetry build
 
-test:
+transpile-tests:
+	. venv/bin/activate
+	poetry run python scripts/transpile_tests.py
+
+test: transpile-tests
 	. venv/bin/activate
 	poetry run pytest
-	poetry run python scripts/transpile_tests.py
 	cd scala; sbt test
 
 docker-build:
@@ -28,7 +30,7 @@ docker-build:
 docker-it:
 	docker run -it -e "TERM=xterm-256color" pyala:latest bash -l
 
-docker-test: docker-build
+docker-test: test-transpile-tests docker-build
 	docker run -t -e "TERM=xterm-256color" pyala:latest
 
 pre-commit:
