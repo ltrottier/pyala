@@ -5,6 +5,8 @@ import inspect
 import os
 from typing import Any, Callable
 
+from parse import parse
+
 
 def to_object(*fn: Callable[..., Any], object_name: str):
     fn_str = "\n".join([Transpiler(f).to_str("  ") for f in fn])
@@ -56,8 +58,14 @@ class Transpiler:
             stmt_lst = []
             for target in node.targets:
                 t = self.translate_expr(target)
-                var = "var " if self._names[t] == 1 else ""
-                stmt_lst.append(f"{indent}{var}{t} = {value}")
+                if t.startswith("Range("):
+                    r, v = parse("{}.map({}(_))", t)
+                    stmt_lst.append(
+                        f"{indent}{r}.zip({value}).foreach {{(i, v) => {v}.insert(i, v) }}"
+                    )
+                else:
+                    var = "var " if self._names[t] == 1 else ""
+                    stmt_lst.append(f"{indent}{var}{t} = {value}")
             stmt_str = "\n".join(stmt_lst)
             return stmt_str
         elif isinstance(node, ast.AugAssign):
@@ -184,7 +192,9 @@ class Transpiler:
         elif isinstance(node, ast.Attribute):
             raise NotImplementedError
         elif isinstance(node, ast.Subscript):
-            raise NotImplementedError
+            val = self.translate_expr(node.value, indent)
+            slce = self.translate_expr(node.slice, indent)
+            expr_str = f"{slce}.map({val}(_))"
         elif isinstance(node, ast.Starred):
             raise NotImplementedError
         elif isinstance(node, ast.Name):
@@ -198,7 +208,10 @@ class Transpiler:
             expr_str = f"({expr_str})"
         # can appear only in Subscript
         elif isinstance(node, ast.Slice):
-            raise NotImplementedError
+            lower = self.translate_expr(node.lower) if node.lower is not None else "0"
+            upper = self.translate_expr(node.upper) if node.upper is not None else "Int.MaxValue"
+            step = self.translate_expr(node.step) if node.step is not None else "1"
+            expr_str = f"Range({lower}, {upper}, {step})"
         else:
             raise ValueError(f"Invalid node {node} for expr")
         return expr_str

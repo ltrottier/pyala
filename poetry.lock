@@ -1358,6 +1358,16 @@ files = [
 ]
 
 [[package]]
+name = "parse"
+version = "1.19.0"
+description = "parse() is the opposite of format()"
+optional = false
+python-versions = "*"
+files = [
+    {file = "parse-1.19.0.tar.gz", hash = "sha256:9ff82852bcb65d139813e2a5197627a94966245c897796760a3a2a8eb66f020b"},
+]
+
+[[package]]
 name = "parso"
 version = "0.8.3"
 description = "A Python Parser"
@@ -2215,4 +2225,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "bbb131be27475727a01c01d98aa7d2fbc337b781b4b4d4bb001dc80407db8b8a"
+content-hash = "1074807d17fe39d1f87fa0d7587199654766919d206b9d533c1def9920ecbdf5"

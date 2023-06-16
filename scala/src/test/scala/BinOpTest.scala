@@ -16,4 +16,7 @@ class BinOpTest extends AnyFunSuite {
     test("fun3") {
         assert(BinOp.fun3(4) === scala.collection.mutable.Buffer((4, 3), (4, 6), (4, 9), (8, 3), (8, 6), (8, 9)))
     }
+    test("fun4") {
+        assert(BinOp.fun4(2) === scala.collection.mutable.Buffer(3, 5, 7))
+    }
 }

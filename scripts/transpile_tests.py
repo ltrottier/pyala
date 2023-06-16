@@ -24,7 +24,13 @@ def fun3(x: int):
     return y
 
 
-bin_op_str = pyala.to_object(addOne, mult6, fun1, fun2, fun3, object_name="BinOp")
+def fun4(x: int):
+    z = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    return z[2:7:x]
+
+
+funs = [addOne, mult6, fun1, fun2, fun3, fun4]
+bin_op_str = pyala.to_object(*funs, object_name="BinOp")
 with open("scala/src/main/scala/BinOp.scala", "w") as fid:
     fid.write("// This file was auto-generated\n\n")
     fid.write(bin_op_str)
