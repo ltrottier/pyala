@@ -24,6 +24,17 @@ print(scala_source)
 
 # Discrepancies
 
+## Reference types
+
+A python reference cannot change type because scala does not allow it.
+
+For instance, this python code is invalid in scala:
+```python
+x = 4
+x = True
+```
+because x is defined as a scala.Integer and cannot change to scala.Boolean.
+
 ## operator
 
 ### FloorDiv
