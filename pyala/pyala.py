@@ -48,11 +48,11 @@ class Transpiler:
         elif isinstance(node, ast.ClassDef):
             raise NotImplementedError
         elif isinstance(node, ast.Return):
-            stmt_str = self.translate_expr(node.value, indent)
+            stmt_str = f"{indent}" + self.translate_expr(node.value, indent)
         elif isinstance(node, ast.Delete):
             raise NotImplementedError
         elif isinstance(node, ast.Assign):
-            value = self.translate_expr(node.value)
+            value = self.translate_expr(node.value, indent)
             stmt_lst = []
             for target in node.targets:
                 t = self.translate_expr(target)
@@ -136,7 +136,10 @@ class Transpiler:
         elif isinstance(node, ast.Set):
             raise NotImplementedError
         elif isinstance(node, ast.ListComp):
-            raise NotImplementedError
+            elt = self.translate_expr(node.elt)
+            gen = [self.translate_comprehension(g, indent + "  ") for g in node.generators]
+            gen_str = '\n'.join(gen)
+            expr_str = f"for {{\n{gen_str}\n{indent}}} yield {elt}" 
         elif isinstance(node, ast.SetComp):
             raise NotImplementedError
         elif isinstance(node, ast.DictComp):
@@ -152,7 +155,16 @@ class Transpiler:
             raise NotImplementedError
         # need sequences for compare to distinguish between
         elif isinstance(node, ast.Compare):
-            raise NotImplementedError
+            left = self.translate_expr(node.left)
+            ops = [self.translate_cmpop(o) for o in node.ops]
+            comparators = [self.translate_expr(c) for c in node.comparators]
+            expr_list = []
+            for op, right in zip(ops, comparators):
+                if len(expr_list) != 0:
+                    expr_list.append('&&')
+                expr_list.append(f"({left} {op} {right})")
+                left = right
+            expr_str = ' '.join(expr_list)
         elif isinstance(node, ast.Call):
             raise NotImplementedError
         elif isinstance(node, ast.FormattedValue):
@@ -179,17 +191,17 @@ class Transpiler:
             self._names[node.id] = self._names.get(node.id, 0) + 1
             expr_str = node.id
         elif isinstance(node, ast.List):
-            raise NotImplementedError
+            expr_str = ', '.join([self.translate_expr(e) for e in node.elts])
+            expr_str = f"scala.collection.mutable.Buffer({expr_str})"
         elif isinstance(node, ast.Tuple):
-            raise NotImplementedError
+            expr_str = ', '.join([self.translate_expr(e) for e in node.elts])
+            expr_str = f"({expr_str})"
         # can appear only in Subscript
         elif isinstance(node, ast.Slice):
             raise NotImplementedError
-        elif isinstance(node, ast.attr):
-            raise NotImplementedError
         else:
             raise ValueError(f"Invalid node {node} for expr")
-        return indent + expr_str
+        return expr_str
 
     def translate_expr_context(self, node):
         expr_str = ""
@@ -259,29 +271,34 @@ class Transpiler:
     def translate_cmpop(self, node):
         cmpop_str = ""
         if isinstance(node, ast.Eq):
-            raise NotImplementedError
+            cmpop_str = " == "
         elif isinstance(node, ast.NotEq):
-            raise NotImplementedError
+            cmpop_str = " != "
         elif isinstance(node, ast.Lt):
-            raise NotImplementedError
+            cmpop_str = " < "
         elif isinstance(node, ast.LtE):
-            raise NotImplementedError
+            cmpop_str = " <= "
         elif isinstance(node, ast.Gt):
-            raise NotImplementedError
+            cmpop_str = " > "
         elif isinstance(node, ast.GtE):
-            raise NotImplementedError
+            cmpop_str = " >= "
         elif isinstance(node, ast.Is):
-            raise NotImplementedError
+            cmpop_str = " eq "
         elif isinstance(node, ast.IsNot):
-            raise NotImplementedError
+            cmpop_str = " ne "
         elif isinstance(node, ast.NotIn):
             raise NotImplementedError
         else:
             raise ValueError(f"Invalid node {node} for cmpop")
         return cmpop_str
     
-    def translate_comprehension(self, node):
-        raise NotImplementedError
+    def translate_comprehension(self, node, indent = ""):
+        target = self.translate_expr(node.target)
+        iterr = self.translate_expr(node.iter)
+        ifs = [self.translate_expr(i) for i in node.ifs]
+        ifs = " && ".join(ifs)
+        c_str = f"{indent}{target} <- {iterr} if ({ifs})"
+        return c_str
     
     def translate_excepthandler(self, node):
         raise NotImplementedError
