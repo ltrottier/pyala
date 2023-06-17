@@ -25,4 +25,12 @@ object BinOp {
     var z = scala.collection.mutable.Buffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     Range(2, 7, x).map(z(_))
   }
+  def fun5(x: Integer) = {
+    var y = scala.collection.mutable.Buffer(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    var z = scala.collection.mutable.Map((for {
+      i <- y if (((i % 2)  ==  0))
+      j <- y if (((j % 3)  ==  0))
+    } yield i -> ((i * j) + x)).toSeq: _*)
+    z
+  }
 }

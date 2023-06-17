@@ -84,8 +84,8 @@ class Transpiler:
             raise NotImplementedError
         elif isinstance(node, ast.AsyncWith):
             raise NotImplementedError
-        elif isinstance(node, ast.Match):
-            raise NotImplementedError
+        # elif isinstance(node, ast.Match):
+        #     raise NotImplementedError
         elif isinstance(node, ast.Raise):
             raise NotImplementedError
         elif isinstance(node, ast.Try):
@@ -138,20 +138,31 @@ class Transpiler:
         elif isinstance(node, ast.Dict):
             keys = [self.translate_expr(k) for k in node.keys]
             values = [self.translate_expr(v) for v in node.values]
-            expr_str = [f"{k} -> {v}" for k, v in zip(keys, values)]
-            expr_str = ", ".join(expr_str)
-            expr_str = f"Map({expr_str})"
+            expr_lst = [f"{k} -> {v}" for k, v in zip(keys, values)]
+            expr_str = ", ".join(expr_lst)
+            expr_str = f"scala.collection.mutable.Map({expr_str})"
         elif isinstance(node, ast.Set):
-            raise NotImplementedError
+            elts = [self.translate_expr(e) for e in node.elts]
+            expr_str = ", ".join(elts)
+            expr_str = f"scala.collection.mutable.Set({expr_str})"
         elif isinstance(node, ast.ListComp):
             elt = self.translate_expr(node.elt)
             gen = [self.translate_comprehension(g, indent + "  ") for g in node.generators]
             gen_str = "\n".join(gen)
             expr_str = f"for {{\n{gen_str}\n{indent}}} yield {elt}"
         elif isinstance(node, ast.SetComp):
-            raise NotImplementedError
+            elt = self.translate_expr(node.elt)
+            gen = [self.translate_comprehension(g, indent + "  ") for g in node.generators]
+            gen_str = "\n".join(gen)
+            expr_str = f"for {{\n{gen_str}\n{indent}}} yield {elt}"
+            expr_str = f"scala.collection.mutable.Set(({expr_str}).toSeq: _*)"
         elif isinstance(node, ast.DictComp):
-            raise NotImplementedError
+            key = self.translate_expr(node.key)
+            value = self.translate_expr(node.value)
+            gen = [self.translate_comprehension(g, indent + "  ") for g in node.generators]
+            gen_str = "\n".join(gen)
+            expr_str = f"for {{\n{gen_str}\n{indent}}} yield {key} -> {value}"
+            expr_str = f"scala.collection.mutable.Map(({expr_str}).toSeq: _*)"
         elif isinstance(node, ast.GeneratorExp):
             raise NotImplementedError
         # the grammar constrains where yield expressions can occur
@@ -308,9 +319,13 @@ class Transpiler:
     def translate_comprehension(self, node, indent=""):
         target = self.translate_expr(node.target)
         iterr = self.translate_expr(node.iter)
-        ifs = [self.translate_expr(i) for i in node.ifs]
-        ifs = " && ".join(ifs)
-        c_str = f"{indent}{target} <- {iterr} if ({ifs})"
+        ifs_lst = [self.translate_expr(i) for i in node.ifs]
+        if len(ifs_lst) == 0:
+            ifs = ""
+        else:
+            ifs = " && ".join(ifs_lst)
+            ifs = f"if ({ifs})"
+        c_str = f"{indent}{target} <- {iterr} {ifs}"
         return c_str
 
     def translate_excepthandler(self, node):
