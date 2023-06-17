@@ -58,7 +58,7 @@ class Transpiler:
             stmt_lst = []
             for target in node.targets:
                 t = self.translate_expr(target)
-                if t.startswith("Range("):
+                if t.startswith("Range("):  # target is an ast.Slice
                     r, v = parse("{}.map({}(_))", t)
                     stmt_lst.append(
                         f"{indent}{r}.zip({value}).foreach {{(i, v) => {v}.insert(i, v) }}"
