@@ -62,5 +62,9 @@ def fun8(x: int):
     return z
 
 
-funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7, fun8]
+def fun9():
+    raise ValueError("It just raises")
+
+
+funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7, fun8, fun9]
 pyala.to_file(*funs, filepath="scala/src/main/scala/BinOp.scala")

@@ -137,10 +137,11 @@ In scala: 3.0//2 -> 1 (Long)
 
 ## expr NamedExpr
 ## Lambda
-
 Lambda expressions are not supported:
 ```python
 lambda x: x +1
 ```
-
 ## operator MatMul
+
+## async
+The keyword `async` is not supported

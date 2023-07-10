@@ -61,4 +61,7 @@ object BinOp {
     }
     z
   }
+  def fun9() = {
+    throw new Exception("It just raises")
+  }
 }

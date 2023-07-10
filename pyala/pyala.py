@@ -3,12 +3,12 @@ from __future__ import annotations
 import ast
 import inspect
 import os
-from typing import Any, Callable
+from typing import Any
 
 from parse import parse
 
 
-def to_file(*fn: Callable[..., Any], filepath: str) -> str:
+def to_file(*fn: Any, filepath: str) -> str:
     object_name = os.path.splitext(filepath.split(os.sep)[-1])[0]
     bin_op_str = to_object(*fn, object_name=object_name)
     with open(filepath, "w") as fid:
@@ -18,17 +18,17 @@ def to_file(*fn: Callable[..., Any], filepath: str) -> str:
     return bin_op_str
 
 
-def to_object(*fn: Callable[..., Any], object_name: str) -> str:
+def to_object(*fn: Any, object_name: str) -> str:
     fn_str = "\n".join([Transpiler(f).to_str("  ") for f in fn])
     return f"object {object_name} {{\n{fn_str}\n}}"
 
 
-def to_str(fn: Callable[..., Any], indent: str = "") -> str:
+def to_str(fn: Any, indent: str = "") -> str:
     return Transpiler(fn).to_str(indent)
 
 
 class Transpiler:
-    def __init__(self, fn: Callable[..., Any]):
+    def __init__(self, fn: Any):
         self.fn = fn
 
     def to_str(self, indent="") -> str:
@@ -82,7 +82,6 @@ class Transpiler:
             target = self.translate_expr(node.target)
             value = self.translate_expr(node.value)
             op = self.translate_operator(node.op, target, value)
-            print(target, op, value)
             stmt_str = f"{indent}{target} = {op}"
         elif isinstance(node, ast.AnnAssign):
             target = self.translate_expr(node.target)
@@ -101,7 +100,7 @@ class Transpiler:
                 )
             stmt_str = f"{indent}for ({target} <- {itr}) {{\n{body}\n{indent}}}"
         elif isinstance(node, ast.AsyncFor):
-            raise NotImplementedError
+            raise NotImplementedError(f"async for is not supported:\n{ast.dump(node, indent=2)}")
         elif isinstance(node, ast.While):
             test = self.translate_expr(node.test, indent)
             body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
@@ -120,13 +119,17 @@ class Transpiler:
             orelse = "\n".join(orelse_lst)
             stmt_str = f"{indent}if {test} {{\n{body}\n{indent}}} else {{\n{orelse}\n{indent}}}"
         elif isinstance(node, ast.With):
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Context managers (with) are not supported:\n{ast.dump(node, indent=2)}"
+            )
         elif isinstance(node, ast.AsyncWith):
-            raise NotImplementedError
-        # elif isinstance(node, ast.Match):
-        #     raise NotImplementedError
+            raise NotImplementedError(
+                f"Async context managers are not supported:\n{ast.dump(node, indent=2)}"
+            )
         elif isinstance(node, ast.Raise):
-            raise NotImplementedError
+            exc = self.translate_expr(node.exc)
+            # cause = "" if node.cause is None else self.translate_expr(node.cause)
+            stmt_str = f"{indent}throw new {exc}"
         elif isinstance(node, ast.Try):
             raise NotImplementedError
         elif isinstance(node, ast.Assert):
@@ -224,7 +227,13 @@ class Transpiler:
                 left = right
             expr_str = " ".join(expr_list)
         elif isinstance(node, ast.Call):
-            raise NotImplementedError
+            func = self.translate_func(node.func)
+            args_list = [self.translate_expr(args, indent=indent + "  ") for args in node.args]
+            keywords_list = [
+                self.translate_keyword(keywords, indent=indent + "  ") for keywords in node.keywords
+            ]
+            args = ", ".join(args_list + keywords_list)
+            expr_str = f"{func}({args})"
         elif isinstance(node, ast.FormattedValue):
             raise NotImplementedError
         elif isinstance(node, ast.JoinedStr):
@@ -265,6 +274,19 @@ class Transpiler:
         else:
             raise ValueError(f"Invalid node {node} for expr")
         return expr_str
+
+    def translate_func(self, node):
+        """Translations for callables.
+        We consider:
+         1. builtins: https://docs.python.org/3/library/functions.html
+         2. math functions: https://docs.python.org/3/library/math.html
+
+        """
+        func = self.translate_expr(node)
+        if func.endswith("Error"):
+            return "Exception"
+        else:
+            return func
 
     def translate_expr_context(self, node):
         expr_str = ""
@@ -371,14 +393,16 @@ class Transpiler:
         raise NotImplementedError
 
     def translate_arguments(self, node):
-        return ",".join([self.translate_arg(arg) for arg in node.args])
+        return ", ".join([self.translate_arg(arg) for arg in node.args])
 
     def translate_arg(self, node):
         annotation = self.translate_annotation(node.annotation)
         return f"{node.arg}: {annotation}"
 
-    def translate_keyword(self, node):
-        raise NotImplementedError
+    def translate_keyword(self, node, indent=""):
+        arg = node.arg
+        value = self.translate_expr(node.value, indent=indent)
+        return f"{arg} = {value}"
 
     def translate_alias(self, node):
         raise NotImplementedError

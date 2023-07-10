@@ -31,4 +31,7 @@ class BinOpTest extends AnyFunSuite {
     test("fun8") {
         assert(BinOp.fun8(16) === 65536)
     }
+    test("fun9") {
+        assertThrows[Exception]{BinOp.fun9()}
+    }
 }
