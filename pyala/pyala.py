@@ -79,7 +79,11 @@ class Transpiler:
             stmt_str = "\n".join(stmt_lst)
             return stmt_str
         elif isinstance(node, ast.AugAssign):
-            raise NotImplementedError
+            target = self.translate_expr(node.target)
+            value = self.translate_expr(node.value)
+            op = self.translate_operator(node.op, target, value)
+            print(target, op, value)
+            stmt_str = f"{indent}{target} = {op}"
         elif isinstance(node, ast.AnnAssign):
             target = self.translate_expr(node.target)
             annotation = self.translate_annotation(node.annotation)
@@ -91,13 +95,23 @@ class Transpiler:
             body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
             body = "\n".join(body_lst)
             orelse_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.orelse]
-            orelse = "\n".join(orelse_lst)
-            # print(target, itr, body, orelse)
+            if len(orelse_lst) != 0:
+                raise NotImplementedError(
+                    f"for/else are not supported:\n{ast.dump(node, indent=2)}"
+                )
             stmt_str = f"{indent}for ({target} <- {itr}) {{\n{body}\n{indent}}}"
         elif isinstance(node, ast.AsyncFor):
             raise NotImplementedError
         elif isinstance(node, ast.While):
-            raise NotImplementedError
+            test = self.translate_expr(node.test, indent)
+            body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
+            body = "\n".join(body_lst)
+            orelse_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.orelse]
+            if len(orelse_lst) != 0:
+                raise NotImplementedError(
+                    f"while/else are not supported:\n{ast.dump(node, indent=2)}"
+                )
+            stmt_str = f"{indent}while ({test}) {{\n{body}\n{indent}}}"
         elif isinstance(node, ast.If):
             test = self.translate_expr(node.test, indent)
             body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]

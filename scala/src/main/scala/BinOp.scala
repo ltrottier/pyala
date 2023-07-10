@@ -52,4 +52,13 @@ object BinOp {
     }
     (z + x)
   }
+  def fun8(x: Integer) = {
+    var i: Integer = 0
+    var z: Integer = 1
+    while ((i  <  x)) {
+      z = (z * 2)
+      i = (i + 1)
+    }
+    z
+  }
 }

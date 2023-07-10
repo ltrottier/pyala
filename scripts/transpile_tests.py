@@ -53,5 +53,14 @@ def fun7(x: int):
     return z + x
 
 
-funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7]
+def fun8(x: int):
+    i: int = 0
+    z: int = 1
+    while i < x:
+        z *= 2
+        i += 1
+    return z
+
+
+funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7, fun8]
 pyala.to_file(*funs, filepath="scala/src/main/scala/BinOp.scala")
