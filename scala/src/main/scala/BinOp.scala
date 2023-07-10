@@ -33,4 +33,17 @@ object BinOp {
     } yield i -> ((i * j) + x)).toSeq: _*)
     z
   }
+  def fun6(x: Integer) = {
+    var z: Integer
+    if (x  >  3) {
+      z = 4
+    } else {
+      if (x  >  5) {
+        z = 6
+      } else {
+        z = 10
+      }
+    }
+    z
+  }
 }

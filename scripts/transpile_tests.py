@@ -35,7 +35,18 @@ def fun5(x: int):
     return z
 
 
-funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5]
+def fun6(x: int):
+    z: int
+    if x > 3:
+        z = 4
+    elif x > 5:
+        z = 6
+    else:
+        z = 10
+    return z
+
+
+funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6]
 bin_op_str = pyala.to_object(*funs, object_name="BinOp")
 with open("scala/src/main/scala/BinOp.scala", "w") as fid:
     fid.write("// This file was auto-generated\n\n")
