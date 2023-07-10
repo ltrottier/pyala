@@ -66,5 +66,60 @@ def fun9():
     raise ValueError("It just raises")
 
 
-funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7, fun8, fun9]
+def fun10(x: float):
+    import math
+
+    return math.sqrt(x)
+
+
+def fun11(x: float):
+    z: int = 0
+    for i in [1, 2, 3, 4, 5, 6]:
+        if i == 3:
+            pass
+        elif i == x:
+            z = i
+            break
+    return z
+
+
+def fun12(x: int):
+    z: float = float(x)
+    return f"{z:0.2f}{x:3d}"
+
+
+def fun13(x: int):
+    z: int = 0
+    for i in range(10, 100, x):
+        z = z + i
+    return z
+
+
+def fun14(*x: int):
+    return sum(x)
+
+
+def fun15(x: int, y: int, *z: int):
+    return x + y + sum(z)
+
+
+funs = [
+    addOne,
+    mult6,
+    fun1,
+    fun2,
+    fun3,
+    fun4,
+    fun5,
+    fun6,
+    fun7,
+    fun8,
+    fun9,
+    fun10,
+    fun11,
+    fun12,
+    fun13,
+    fun14,
+    fun15,
+]
 pyala.to_file(*funs, filepath="scala/src/main/scala/BinOp.scala")

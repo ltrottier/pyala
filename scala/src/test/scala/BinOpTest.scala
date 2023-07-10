@@ -34,4 +34,22 @@ class BinOpTest extends AnyFunSuite {
     test("fun9") {
         assertThrows[Exception]{BinOp.fun9()}
     }
+    test("fun10") {
+        assert(BinOp.fun10(49) === 7)
+    }
+    test("fun11") {
+        assert(BinOp.fun11(5) === 5)
+    }
+    test("fun12") {
+        assert(BinOp.fun12(2) === "2.00  2")
+    }
+    test("fun13") {
+        assert(BinOp.fun13(3) === 1605)
+    }
+    test("fun14") {
+        assert(BinOp.fun14(3,4,5,6,7) === 25)
+    }
+    test("fun15") {
+        assert(BinOp.fun15(3,6,9,12) === 30)
+    }
 }

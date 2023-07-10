@@ -7,6 +7,11 @@ from typing import Any
 
 from parse import parse
 
+GLOBAL_IMPORTS = """import scala.util.control.Breaks._
+
+
+"""
+
 
 def to_file(*fn: Any, filepath: str) -> str:
     object_name = os.path.splitext(filepath.split(os.sep)[-1])[0]
@@ -18,9 +23,9 @@ def to_file(*fn: Any, filepath: str) -> str:
     return bin_op_str
 
 
-def to_object(*fn: Any, object_name: str) -> str:
-    fn_str = "\n".join([Transpiler(f).to_str("  ") for f in fn])
-    return f"object {object_name} {{\n{fn_str}\n}}"
+def to_object(*fn: Any, object_name: str, with_global_imports: bool = True) -> str:
+    fn_str = "\n".join([Transpiler(f).to_str("  ", False) for f in fn])
+    return f"{GLOBAL_IMPORTS}object {object_name} {{\n{fn_str}\n}}"
 
 
 def to_str(fn: Any, indent: str = "") -> str:
@@ -31,10 +36,14 @@ class Transpiler:
     def __init__(self, fn: Any):
         self.fn = fn
 
-    def to_str(self, indent="") -> str:
+    def to_str(self, indent="", with_global_imports: bool = True) -> str:
         self._names: dict[str, Any] = {}
         tree = ast.parse(inspect.getsource(self.fn))
-        return self.translate_mod(tree, indent)
+        tree_str = self.translate_mod(tree, indent)
+        if with_global_imports:
+            return f"{GLOBAL_IMPORTS}{tree_str}"
+        else:
+            return tree_str
 
     # mod
     def translate_mod(self, node, indent: str = ""):
@@ -98,7 +107,7 @@ class Transpiler:
                 raise NotImplementedError(
                     f"for/else are not supported:\n{ast.dump(node, indent=2)}"
                 )
-            stmt_str = f"{indent}for ({target} <- {itr}) {{\n{body}\n{indent}}}"
+            stmt_str = f"{indent}breakable{{for ({target} <- {itr}) {{\n{body}\n{indent}}}}}"
         elif isinstance(node, ast.AsyncFor):
             raise NotImplementedError(f"async for is not supported:\n{ast.dump(node, indent=2)}")
         elif isinstance(node, ast.While):
@@ -110,7 +119,7 @@ class Transpiler:
                 raise NotImplementedError(
                     f"while/else are not supported:\n{ast.dump(node, indent=2)}"
                 )
-            stmt_str = f"{indent}while ({test}) {{\n{body}\n{indent}}}"
+            stmt_str = f"{indent}breakable{{while ({test}) {{\n{body}\n{indent}}}}}"
         elif isinstance(node, ast.If):
             test = self.translate_expr(node.test, indent)
             body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
@@ -127,17 +136,27 @@ class Transpiler:
                 f"Async context managers are not supported:\n{ast.dump(node, indent=2)}"
             )
         elif isinstance(node, ast.Raise):
-            exc = self.translate_expr(node.exc)
-            # cause = "" if node.cause is None else self.translate_expr(node.cause)
+            exc = "Exception()" if node.exc is None else self.translate_expr(node.exc)
             stmt_str = f"{indent}throw new {exc}"
         elif isinstance(node, ast.Try):
             raise NotImplementedError
         elif isinstance(node, ast.Assert):
-            raise NotImplementedError
+            test = self.translate_expr(node.test)
+            msg = "" if node.msg is None else self.translate_expr(node.msg)
+            stmt_str = f"{indent}assert({test}, {msg})"
         elif isinstance(node, ast.Import):
-            raise NotImplementedError
+            aliases_lst = [f"{indent}import " + self.translate_alias(name) for name in node.names]
+            stmt_str = "\n".join(aliases_lst)
         elif isinstance(node, ast.ImportFrom):
-            raise NotImplementedError
+            module = node.module
+            if module == "math":
+                module = "scala.math"
+            aliases_lst = [
+                f"{indent}import {module}." + self.translate_alias(name) for name in node.names
+            ]
+            level = node.level
+            print(module, aliases_lst, level)
+            stmt_str = "\n".join(aliases_lst)
         elif isinstance(node, ast.Global):
             raise NotImplementedError
         elif isinstance(node, ast.Nonlocal):
@@ -145,11 +164,13 @@ class Transpiler:
         elif isinstance(node, ast.Expr):
             stmt_str = self.translate_expr(node, indent)
         elif isinstance(node, ast.Pass):
-            raise NotImplementedError
+            stmt_str = f"{indent}()"
         elif isinstance(node, ast.Break):
-            raise NotImplementedError
+            stmt_str = f"{indent}break"
         elif isinstance(node, ast.Continue):
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"For loops with continue are not supported:\n{ast.dump(node, indent=2)}"
+            )
         else:
             raise ValueError(f"Invalid node {node} for stmt")
         return stmt_str
@@ -169,9 +190,7 @@ class Transpiler:
             operand = self.translate_expr(node.operand)
             expr_str = self.translate_unaryop(node.op, operand)
         elif isinstance(node, ast.Lambda):
-            raise ValueError(
-                "Cannot transpile lambda expression because python does not support type hinting for the arguments"
-            )
+            raise ValueError(f"lambda expressions are not supported:\n{ast.dump(node, indent=2)}")
         elif isinstance(node, ast.IfExp):
             test = self.translate_expr(node.test)
             body = self.translate_expr(node.body, indent=indent + "    ")
@@ -206,14 +225,20 @@ class Transpiler:
             expr_str = f"for {{\n{gen_str}\n{indent}}} yield {key} -> {value}"
             expr_str = f"scala.collection.mutable.Map(({expr_str}).toSeq: _*)"
         elif isinstance(node, ast.GeneratorExp):
-            raise NotImplementedError
+            raise ValueError(
+                f"generator expressions are not supported:\n{ast.dump(node, indent=2)}"
+            )
         # the grammar constrains where yield expressions can occur
         elif isinstance(node, ast.Await):
-            raise NotImplementedError
+            raise ValueError(f"async and await are not supported:\n{ast.dump(node, indent=2)}")
         elif isinstance(node, ast.Yield):
-            raise NotImplementedError
+            raise ValueError(
+                f"generator expressions are not supported:\n{ast.dump(node, indent=2)}"
+            )
         elif isinstance(node, ast.YieldFrom):
-            raise NotImplementedError
+            raise ValueError(
+                f"generator expressions are not supported:\n{ast.dump(node, indent=2)}"
+            )
         # need sequences for compare to distinguish between
         elif isinstance(node, ast.Compare):
             left = self.translate_expr(node.left)
@@ -227,17 +252,20 @@ class Transpiler:
                 left = right
             expr_str = " ".join(expr_list)
         elif isinstance(node, ast.Call):
-            func = self.translate_func(node.func)
             args_list = [self.translate_expr(args, indent=indent + "  ") for args in node.args]
             keywords_list = [
                 self.translate_keyword(keywords, indent=indent + "  ") for keywords in node.keywords
             ]
             args = ", ".join(args_list + keywords_list)
-            expr_str = f"{func}({args})"
+            expr_str = self.translate_func(node.func, args)
         elif isinstance(node, ast.FormattedValue):
-            raise NotImplementedError
+            value = self.translate_expr(node.value)
+            format_spec = "" if node.format_spec is None else self.translate_expr(node.format_spec)
+            format_spec = format_spec.replace('"', "").lstrip("0")
+            expr_str = f'f"${value}%{format_spec}"'
         elif isinstance(node, ast.JoinedStr):
-            raise NotImplementedError
+            values_lst = [self.translate_expr(value) for value in node.values]
+            expr_str = " + ".join(values_lst)
         elif isinstance(node, ast.Constant):
             if node.value is True:
                 expr_str = "true"
@@ -249,7 +277,9 @@ class Transpiler:
                 expr_str = str(node.value)
         # the following expression can appear in assignment context
         elif isinstance(node, ast.Attribute):
-            raise NotImplementedError
+            value = self.translate_expr(node.value)
+            attr = node.attr
+            expr_str = f"{value}.{attr}"
         elif isinstance(node, ast.Subscript):
             val = self.translate_expr(node.value, indent)
             slce = self.translate_expr(node.slice, indent)
@@ -275,7 +305,7 @@ class Transpiler:
             raise ValueError(f"Invalid node {node} for expr")
         return expr_str
 
-    def translate_func(self, node):
+    def translate_func(self, node, args: str):
         """Translations for callables.
         We consider:
          1. builtins: https://docs.python.org/3/library/functions.html
@@ -284,9 +314,21 @@ class Transpiler:
         """
         func = self.translate_expr(node)
         if func.endswith("Error"):
-            return "Exception"
+            return f"Exception({args})"
+        elif func == "float":
+            return f"{args}.toDouble"
+        elif func == "int":
+            return f"{args}.toInt"
+        elif func == "bool":
+            return f"{args}.toBoolean"
+        elif func == "str":
+            return f"{args}.toString"
+        elif func == "range":
+            return f"Range({args})"
+        elif func == "sum":
+            return f"{args}.sum"
         else:
-            return func
+            return f"{func}({args})"
 
     def translate_expr_context(self, node):
         expr_str = ""
@@ -393,7 +435,25 @@ class Transpiler:
         raise NotImplementedError
 
     def translate_arguments(self, node):
-        return ", ".join([self.translate_arg(arg) for arg in node.args])
+        if node.kwarg is not None:
+            raise NotImplementedError(f"kwargs are not supported:\n{ast.dump(node, indent=2)}")
+        vararg_lst = [] if node.vararg is None else [self.translate_arg(node.vararg) + "*"]
+        args_lst = [self.translate_arg(arg) for arg in node.args]
+        defaults_lst = [self.translate_expr(d) for d in node.defaults]
+
+        argdef_lst = []
+        i = len(args_lst) - 1
+        j = len(defaults_lst) - 1
+        while i >= 0:
+            if j >= 0:
+                arg = f"{args_lst[i]} = {defaults_lst[j]}"
+            else:
+                arg = f"{args_lst[i]}"
+            argdef_lst.append(arg)
+            i -= 1
+            j -= 1
+        argdef_lst = argdef_lst[::-1]
+        return ", ".join(argdef_lst + vararg_lst)
 
     def translate_arg(self, node):
         annotation = self.translate_annotation(node.annotation)
@@ -405,7 +465,20 @@ class Transpiler:
         return f"{arg} = {value}"
 
     def translate_alias(self, node):
-        raise NotImplementedError
+        # only used in import statement
+        name = node.name
+        asname = node.asname
+        if name == "math":
+            if asname is not None:
+                alias_str = f"scala.{{math => {asname}}}"
+            else:
+                alias_str = "scala.math"
+        else:
+            if asname is not None:
+                alias_str = f"{{{name} => {asname}}}"
+            else:
+                alias_str = name
+        return alias_str
 
     def translate_match_case(self, node):
         raise NotImplementedError
@@ -434,7 +507,7 @@ class Transpiler:
         raise NotImplementedError
 
     def translate_annotation(self, node):
-        return {"int": "Integer", "float": "Double", "bool": "Boolean", "str": "String"}[node.id]
+        return {"int": "Int", "float": "Double", "bool": "Boolean", "str": "String"}[node.id]
 
 
 __all__ = ["to_object", "to_str"]

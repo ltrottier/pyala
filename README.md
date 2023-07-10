@@ -117,6 +117,39 @@ def foo(x: int):
     return z
 ```
 
+## F-string
+
+String interpolation (f-string) is typed in scala. This means that this code is invalid:
+```python
+def foo(x: int):
+    return f"{x:0.2f}"
+```
+You can only using float with "f" format:
+```python
+def foo(x: int):
+    z: float = float(x)
+    return f"{z:0.2f}"
+```
+
+## *args and **kwargs
+
+First, `**kwargs` are not supported. Second, `*args` must always comes last in the argument list. This means that this code:
+```python
+def foo(*x: int, z:int = 0):
+    return sum(x) - z
+```
+is transpiled to:
+```scala
+def foo(z: Int = 0, x: Int*) = {
+  (x.sum - z)
+}
+```
+Note the order of the parameters is z then x instead of x then z.
+
+You can call this function correctly in python with `goo(3,4,5,6,z=7)` but it will give a compilation error in scala because the correct call is `goo(7,3,4,5,6)`.
+
+Be extra careful when calling function defined in this way. The order will be correct in python but not in scala.
+
 ## operator
 
 ### FloorDiv
@@ -142,6 +175,6 @@ Lambda expressions are not supported:
 lambda x: x +1
 ```
 ## operator MatMul
-
+## for loop with continue
 ## async
 The keyword `async` is not supported
