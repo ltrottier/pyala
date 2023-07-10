@@ -25,4 +25,7 @@ class BinOpTest extends AnyFunSuite {
     test("fun6") {
         assert(BinOp.fun6(0) === 10)
     }
+    test("fun7") {
+        assert(BinOp.fun7(4) === 19)
+    }
 }

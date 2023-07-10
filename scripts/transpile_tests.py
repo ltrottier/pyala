@@ -36,7 +36,7 @@ def fun5(x: int):
 
 
 def fun6(x: int):
-    z: int
+    z: int = 0
     if x > 3:
         z = 4
     elif x > 5:
@@ -46,8 +46,12 @@ def fun6(x: int):
     return z
 
 
-funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6]
-bin_op_str = pyala.to_object(*funs, object_name="BinOp")
-with open("scala/src/main/scala/BinOp.scala", "w") as fid:
-    fid.write("// This file was auto-generated\n\n")
-    fid.write(bin_op_str)
+def fun7(x: int):
+    z: int = 0
+    for i, j in [(1, 2), (2, 3), (3, 4)]:
+        z = z + i + j
+    return z + x
+
+
+funs = [addOne, mult6, fun1, fun2, fun3, fun4, fun5, fun6, fun7]
+pyala.to_file(*funs, filepath="scala/src/main/scala/BinOp.scala")

@@ -8,7 +8,17 @@ from typing import Any, Callable
 from parse import parse
 
 
-def to_object(*fn: Callable[..., Any], object_name: str):
+def to_file(*fn: Callable[..., Any], filepath: str) -> str:
+    object_name = os.path.splitext(filepath.split(os.sep)[-1])[0]
+    bin_op_str = to_object(*fn, object_name=object_name)
+    with open(filepath, "w") as fid:
+        fid.write("// This file was auto-generated\n")
+        fid.write(bin_op_str)
+        fid.write("\n")
+    return bin_op_str
+
+
+def to_object(*fn: Callable[..., Any], object_name: str) -> str:
     fn_str = "\n".join([Transpiler(f).to_str("  ") for f in fn])
     return f"object {object_name} {{\n{fn_str}\n}}"
 
@@ -76,7 +86,14 @@ class Transpiler:
             value = " = " + self.translate_expr(node.value) if node.value is not None else ""
             stmt_str = f"{indent}var {target}: {annotation}{value}"
         elif isinstance(node, ast.For):
-            raise NotImplementedError
+            target = self.translate_expr(node.target)
+            itr = self.translate_expr(node.iter)
+            body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
+            body = "\n".join(body_lst)
+            orelse_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.orelse]
+            orelse = "\n".join(orelse_lst)
+            # print(target, itr, body, orelse)
+            stmt_str = f"{indent}for ({target} <- {itr}) {{\n{body}\n{indent}}}"
         elif isinstance(node, ast.AsyncFor):
             raise NotImplementedError
         elif isinstance(node, ast.While):

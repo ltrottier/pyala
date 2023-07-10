@@ -4,25 +4,50 @@ Python 3.10 to Scala 2.13 Transpiler
 > **Warning**
 > Project under development. Not available right now. Come back later.
 
-# How to use
+# Tutorial
+
+## How to use pyala
+
+1. Define your python function and add type annotations to its input parameters.
+2. Declare new variables with empty annotated assignment to specify their local scope.
+3. Use one of `pyala.to_str`, `pyala.to_object` or `pyala.to_file` to transpile your code.
 
 ```python
-import pyala
+from pyala import pyala
 
-def foo(x: int):
-    return x + 1
+# define your functions
+def foo():
+    ...
 
-scala_source = pyala.to_str(foo)
-print(scala_source)
+def goo():
+    ...
+
+# get the source code of a single function
+print(pyala.to_str(foo))
+
+# get the source code of multiple functions bundled in an object
+print(pyala.to_object(foo, goo, object_name='Example'))
+
+# save the source code in a file
+print(pyala.to_file(foo, goo, filepath='/tmp/Example.scala'))
 ```
 
-# Not Supported
+## Examples
 
-* expr NamedExpr
-* expr Lambda
-* operator MatMul
+```python
+def foo():
+    y: int
+    if x < 0:
+        y = x**2
+    else:
+        y = x * 2
+    return y + x
+```
+
 
 # Discrepancies
+
+Here are a list of considerations to take into account due to discrepancies between scala and python.
 
 ## Reference types
 
@@ -34,6 +59,63 @@ x = 4
 x = True
 ```
 because x is defined as a scala.Integer and cannot change to scala.Boolean.
+
+## Local Scope
+
+In python, you can return a variable defined in a local scope. This is not allowed in scala.
+
+For instance, this is valid python code:
+```python
+def foo():
+    if True:
+        x = 5
+    return x
+```
+
+but this is not valid is scala:
+```scala
+def foo() = {
+    if (true) {
+        val x = 5
+    }
+    x
+}
+```
+
+However, you can access variable defined in a parent scope, like this:
+```scala
+def foo() = {
+    var x: Integer = 0
+    if (true) {
+        x = 5
+    }
+    x
+}
+```
+
+For this reason, pyala requires that you add an annotated assignment for each variable that you want to create:
+```python
+def foo():
+    x: int = 0
+    if True:
+        x = 5
+    return x
+```
+
+## Variable function arguments
+
+You cannot assign a new value to a function argument. This code is invalid:
+```python
+def foo(x: int):
+    x = x + 1
+    return x
+```
+You must create a new variable:
+```python
+def foo(x: int):
+    z = x + 1
+    return z
+```
 
 ## operator
 
@@ -48,3 +130,17 @@ In scala: 3.0//2 -> 1 (Long)
 # References
 
 * Python AST: https://docs.python.org/3/library/ast.html
+
+
+
+# Not Supported
+
+## expr NamedExpr
+## Lambda
+
+Lambda expressions are not supported:
+```python
+lambda x: x +1
+```
+
+## operator MatMul

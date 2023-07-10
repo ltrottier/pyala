@@ -1,5 +1,4 @@
 // This file was auto-generated
-
 object BinOp {
   def addOne(x: Integer) = {
     (x + 1)
@@ -34,7 +33,7 @@ object BinOp {
     z
   }
   def fun6(x: Integer) = {
-    var z: Integer
+    var z: Integer = 0
     if (x  >  3) {
       z = 4
     } else {
@@ -45,5 +44,12 @@ object BinOp {
       }
     }
     z
+  }
+  def fun7(x: Integer) = {
+    var z: Integer = 0
+    for ((i, j) <- scala.collection.mutable.Buffer((1, 2), (2, 3), (3, 4))) {
+      z = ((z + i) + j)
+    }
+    (z + x)
   }
 }
