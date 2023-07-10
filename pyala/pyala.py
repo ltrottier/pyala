@@ -71,7 +71,10 @@ class Transpiler:
         elif isinstance(node, ast.AugAssign):
             raise NotImplementedError
         elif isinstance(node, ast.AnnAssign):
-            raise NotImplementedError
+            target = self.translate_expr(node.target)
+            annotation = self.translate_annotation(node.annotation)
+            value = " = " + self.translate_expr(node.value) if node.value is not None else ""
+            stmt_str = f"{indent}var {target}: {annotation}{value}"
         elif isinstance(node, ast.For):
             raise NotImplementedError
         elif isinstance(node, ast.AsyncFor):
@@ -79,7 +82,12 @@ class Transpiler:
         elif isinstance(node, ast.While):
             raise NotImplementedError
         elif isinstance(node, ast.If):
-            raise NotImplementedError
+            test = self.translate_expr(node.test, indent)
+            body_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.body]
+            body = "\n".join(body_lst)
+            orelse_lst = [self.translate_stmt(b, indent=indent + "  ") for b in node.orelse]
+            orelse = "\n".join(orelse_lst)
+            stmt_str = f"{indent}if {test} {{\n{body}\n{indent}}} else {{\n{orelse}\n{indent}}}"
         elif isinstance(node, ast.With):
             raise NotImplementedError
         elif isinstance(node, ast.AsyncWith):
