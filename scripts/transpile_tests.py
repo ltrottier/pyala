@@ -1,3 +1,5 @@
+import math
+
 from pyala import pyala
 
 
@@ -67,8 +69,6 @@ def fun9():
 
 
 def fun10(x: float):
-    import math
-
     return math.sqrt(x)
 
 
@@ -103,6 +103,42 @@ def fun15(x: int, y: int, *z: int):
     return x + y + sum(z)
 
 
+def fun16(x: int):
+    return chr(x)
+
+
+def fun17(x: int):
+    return bin(x)
+
+
+def fun18(x: int):
+    return frozenset(set(range(1, x)))
+
+
+def fun19():
+    x = [True, True, True]
+    y = [True, False, False]
+    return all(x), any(y)
+
+
+def fun20():
+    x = [1, 2, 3, 4]
+    y = [3, 4, 5]
+
+    def inc(x: int, y: int):
+        return x + y + 1
+
+    return list(map(inc, x, y))
+
+
+def fun21(x: int):
+    return max(1, 2, 3, 4, 5, x) + min([-1, -2, -3, -4])
+
+
+def fun22():
+    return ord("€")
+
+
 funs = [
     addOne,
     mult6,
@@ -121,5 +157,12 @@ funs = [
     fun13,
     fun14,
     fun15,
+    fun16,
+    fun17,
+    fun18,
+    fun19,
+    fun20,
+    fun21,
+    fun22,
 ]
 pyala.to_file(*funs, filepath="scala/src/main/scala/BinOp.scala")

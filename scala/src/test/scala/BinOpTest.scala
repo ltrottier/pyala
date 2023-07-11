@@ -52,4 +52,25 @@ class BinOpTest extends AnyFunSuite {
     test("fun15") {
         assert(BinOp.fun15(3,6,9,12) === 30)
     }
+    test("fun16") {
+        assert(BinOp.fun16(97) === "a")
+    }
+    test("fun17") {
+        assert(BinOp.fun17(97) === "0b1100001")
+    }
+    test("fun18") {
+        assert(BinOp.fun18(5) === Set(1,2,3,4))
+    }
+    test("fun19") {
+        assert(BinOp.fun19() === (true, true))
+    }
+    test("fun20") {
+        assert(BinOp.fun20() === scala.collection.mutable.Buffer(5,7,9))
+    }
+    test("fun21") {
+        assert(BinOp.fun21(7) === 3)
+    }
+    test("fun22") {
+        assert(BinOp.fun22() === 8364)
+    }
 }

@@ -1,6 +1,6 @@
 // This file was auto-generated
 import scala.util.control.Breaks._
-
+import scala.math
 
 object BinOp {
   def addOne(x: Int) = {
@@ -68,7 +68,6 @@ object BinOp {
     throw new Exception("It just raises")
   }
   def fun10(x: Double) = {
-    import scala.math
     math.sqrt(x)
   }
   def fun11(x: Double) = {
@@ -103,5 +102,33 @@ object BinOp {
   }
   def fun15(x: Int, y: Int, z: Int*) = {
     ((x + y) + z.sum)
+  }
+  def fun16(x: Int) = {
+    x.toChar.toString
+  }
+  def fun17(x: Int) = {
+    "0b" + x.toBinaryString
+  }
+  def fun18(x: Int) = {
+    scala.collection.mutable.Set(Range(1, x).toSeq: _*).toSet
+  }
+  def fun19() = {
+    var x = scala.collection.mutable.Buffer(true, true, true)
+    var y = scala.collection.mutable.Buffer(true, false, false)
+    (x.forall(x => x), y.exists(x => x))
+  }
+  def fun20() = {
+    var x = scala.collection.mutable.Buffer(1, 2, 3, 4)
+    var y = scala.collection.mutable.Buffer(3, 4, 5)
+    def inc(x: Int, y: Int) = {
+      ((x + y) + 1)
+    }
+    scala.collection.mutable.Buffer(x.zip(y).map((inc _).tupled).toSeq: _*)
+  }
+  def fun21(x: Int) = {
+    (1.max(2).max(3).max(4).max(5).max(x) + scala.collection.mutable.Buffer(-(1), -(2), -(3), -(4)).min)
+  }
+  def fun22() = {
+    "€".charAt(0).toInt
   }
 }

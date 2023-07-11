@@ -8,7 +8,7 @@ from typing import Any
 from parse import parse
 
 GLOBAL_IMPORTS = """import scala.util.control.Breaks._
-
+import scala.math
 
 """
 
@@ -145,18 +145,19 @@ class Transpiler:
             msg = "" if node.msg is None else self.translate_expr(node.msg)
             stmt_str = f"{indent}assert({test}, {msg})"
         elif isinstance(node, ast.Import):
-            aliases_lst = [f"{indent}import " + self.translate_alias(name) for name in node.names]
-            stmt_str = "\n".join(aliases_lst)
+            raise NotImplementedError("import is not supported")
+            # aliases_lst = [f"{indent}import " + self.translate_alias(name) for name in node.names]
+            # stmt_str = "\n".join(aliases_lst)
         elif isinstance(node, ast.ImportFrom):
-            module = node.module
-            if module == "math":
-                module = "scala.math"
-            aliases_lst = [
-                f"{indent}import {module}." + self.translate_alias(name) for name in node.names
-            ]
-            level = node.level
-            print(module, aliases_lst, level)
-            stmt_str = "\n".join(aliases_lst)
+            raise NotImplementedError("import is not supported")
+            # module = node.module
+            # if module == "math":
+            #     module = "scala.math"
+            # aliases_lst = [
+            #     f"{indent}import {module}." + self.translate_alias(name) for name in node.names
+            # ]
+            # level = node.level
+            # stmt_str = "\n".join(aliases_lst)
         elif isinstance(node, ast.Global):
             raise NotImplementedError
         elif isinstance(node, ast.Nonlocal):
@@ -256,8 +257,8 @@ class Transpiler:
             keywords_list = [
                 self.translate_keyword(keywords, indent=indent + "  ") for keywords in node.keywords
             ]
-            args = ", ".join(args_list + keywords_list)
-            expr_str = self.translate_func(node.func, args)
+            args_lst = args_list + keywords_list
+            expr_str = self.translate_func(node.func, args_lst)
         elif isinstance(node, ast.FormattedValue):
             value = self.translate_expr(node.value)
             format_spec = "" if node.format_spec is None else self.translate_expr(node.format_spec)
@@ -305,7 +306,7 @@ class Transpiler:
             raise ValueError(f"Invalid node {node} for expr")
         return expr_str
 
-    def translate_func(self, node, args: str):
+    def translate_func(self, node, args_lst: list[str]):
         """Translations for callables.
         We consider:
          1. builtins: https://docs.python.org/3/library/functions.html
@@ -313,20 +314,187 @@ class Transpiler:
 
         """
         func = self.translate_expr(node)
+        args = ", ".join(args_lst)
         if func.endswith("Error"):
             return f"Exception({args})"
-        elif func == "float":
-            return f"{args}.toDouble"
-        elif func == "int":
-            return f"{args}.toInt"
+        # built-in functions: https://docs.python.org/3/library/functions.html
+        elif func == "abs":
+            return f"math.abs({args})"
+        elif func == "aiter":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "all":
+            return f"{args}.forall(x => x)"
+        elif func == "any":
+            return f"{args}.exists(x => x)"
+        elif func == "anext":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "ascii":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "bin":
+            return f'"0b" + {args}.toBinaryString'
         elif func == "bool":
             return f"{args}.toBoolean"
-        elif func == "str":
-            return f"{args}.toString"
+        elif func == "breakpoint":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "bytearray":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "bytes":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "callable":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "chr":
+            return f"{args}.toChar.toString"
+        elif func == "classmethod":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "compile":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "complex":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "delattr":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "dict":
+            return f"scala.collection.mutable.Map({args.replace('=', '<-')})"
+        elif func == "dir":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "divmod":
+            dividend = args_lst[0]
+            divisor = args_lst[1]
+            return f"({dividend} / {divisor}, {dividend} % {divisor})"
+        elif func == "enumerate":
+            return f"{args}.zipWithIndex.map((elem, idx) => (idx, elem))"
+        elif func == "eval":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "exec":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "filter":
+            cond, iterable = args_lst
+            return f"{iterable}.filter({cond})"
+        elif func == "float":
+            return f"{args}.toDouble"
+        elif func == "format":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "frozenset":
+            return f"{args}.toSet"
+        elif func == "getattr":
+            if len(args_lst) == 2:
+                raise NotImplementedError("getattr with a default value is not supported.")
+            obj = args_lst[0]
+            name = args_lst[1]
+            return f"{obj}.{name}"
+        elif func == "globals":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "hasattr":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "hash":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "help":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "hex":
+            return f'"0x" + {args}.toHexString'
+        elif func == "id":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "input":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "int":
+            if len(args_lst) == 2:
+                raise NotImplementedError(f"{func} with a custom base is not supported")
+            return f"{args}.toInt"
+        elif func == "isinstance":
+            obj = args_lst[0]
+            cls = args_lst[1]
+            return f"{obj}.isInstanceOf[{cls}]"
+        elif func == "issubclass":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "iter":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "len":
+            return f"{args}.size"
+        elif func == "list":
+            return f"scala.collection.mutable.Buffer({args}.toSeq: _*)"
+        elif func == "locals":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "map":
+            func = args_lst[0]
+            iterable = args_lst[1]
+            if len(args_lst) > 2:
+                for it in args_lst[2:]:
+                    iterable = f"{iterable}.zip({it})"
+                return f"{iterable}.map(({func} _).tupled)"
+            else:
+                return f"{iterable}.map({func})"
+        elif func == "max":
+            if len(args_lst) == 1:
+                return f"{args}.max"
+            else:
+                func_str = args_lst[0]
+                for arg in args_lst[1:]:
+                    func_str = f"{func_str}.max({arg})"
+                return func_str
+        elif func == "min":
+            if len(args_lst) == 1:
+                return f"{args}.min"
+            else:
+                func_str = args_lst[0]
+                for arg in args_lst[1:]:
+                    func_str = f"{func_str}.min({arg})"
+                return func_str
+        elif func == "memoryview":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "next":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "oct":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "open":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "ord":
+            return f"{args}.charAt(0).toInt"
+        elif func == "pow":
+            return f"math.pow({args})"
+        elif func == "print":
+            return f"println({args})"
+        elif func == "property":
+            raise NotImplementedError(f"{func} is not supported")
         elif func == "range":
             return f"Range({args})"
+        elif func == "repr":
+            return f"{args}.toString"
+        elif func == "reversed":
+            return f"{args}.reverse.toBuffer"
+        elif func == "round":
+            return f"math.round({args})"
+        elif func == "set":
+            return f"scala.collection.mutable.Set({args}.toSeq: _*)"
+        elif func == "setattr":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "slice":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "sorted":
+            return f"{args}.sorted.toBuffer"
+        elif func == "staticmethod":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "str":
+            return f"{args}.toString"
         elif func == "sum":
             return f"{args}.sum"
+        elif func == "super":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "tuple":
+            return f"({args})"
+        elif func == "type":
+            return f"{args}.getClass"
+        elif func == "vars":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "zip":
+            if len(args_lst) == 1:
+                raise ValueError(
+                    "Cannot zip only 1 iterable because scala does not support 1-tuple."
+                )
+            func_str = args_lst[0]
+            for arg in args_lst[1:]:
+                func_str = f"{func_str}.zip({arg})"
+            return func_str
+        elif func == "__import__":
+            raise NotImplementedError(f"{func} is not supported")
         else:
             return f"{func}({args})"
 
@@ -365,7 +533,7 @@ class Transpiler:
         elif isinstance(node, ast.Mod):
             op_str = f"{left} % {right}"
         elif isinstance(node, ast.Pow):
-            op_str = f"scala.math.pow({left}.toDouble, {right}.toDouble)"
+            op_str = f"math.pow({left}.toDouble, {right}.toDouble)"
         elif isinstance(node, ast.LShift):
             op_str = f"{left} << {right}"
         elif isinstance(node, ast.RShift):
@@ -377,7 +545,7 @@ class Transpiler:
         elif isinstance(node, ast.BitAnd):
             op_str = f"{left} & {right}"
         elif isinstance(node, ast.FloorDiv):
-            op_str = f"scala.math.floorDiv({left}.toLong, {right}.toLong)"
+            op_str = f"math.floorDiv({left}.toLong, {right}.toLong)"
         else:
             raise ValueError(f"Invalid node {node} for operator")
 
@@ -468,16 +636,10 @@ class Transpiler:
         # only used in import statement
         name = node.name
         asname = node.asname
-        if name == "math":
-            if asname is not None:
-                alias_str = f"scala.{{math => {asname}}}"
-            else:
-                alias_str = "scala.math"
+        if asname is not None:
+            alias_str = f"{{{name} => {asname}}}"
         else:
-            if asname is not None:
-                alias_str = f"{{{name} => {asname}}}"
-            else:
-                alias_str = name
+            alias_str = name
         return alias_str
 
     def translate_match_case(self, node):

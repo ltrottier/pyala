@@ -49,6 +49,19 @@ def foo():
 
 Here are a list of considerations to take into account due to discrepancies between scala and python.
 
+## Imports
+
+Imports are not supported except for:
+1. `import math`
+
+The module `scala.math` is automatically imported and will mimic python built-in functions related to math, and the library `math` itself. This means that this code is valid, even though it uses an import:
+
+```python
+import math
+def foo(x: float):
+    return math.sqrt(x)
+```
+
 ## Reference types
 
 A python reference cannot change type because scala does not allow it.
@@ -160,6 +173,10 @@ Eg.:
 In python: 3.0//2 -> 1.0 (float)
 In scala: 3.0//2 -> 1 (Long)
 
+### hex
+
+In python, `hex(-42)` returns `"-0x2a"`, in scala it returns `"0xffffffd6"`.
+
 # References
 
 * Python AST: https://docs.python.org/3/library/ast.html
@@ -178,3 +195,4 @@ lambda x: x +1
 ## for loop with continue
 ## async
 The keyword `async` is not supported
+## complex
