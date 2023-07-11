@@ -1,15 +1,21 @@
 # pyala
-Python 3.10 to Scala 2.13 Transpiler
+Transpiler for python 3.10 to scala 2.13
 
 > **Warning**
-> Project under development. Not available right now. Come back later.
+> Project under development.
+
+# Install
+
+```bash
+(venv) $ pip install pyala
+```
 
 # Tutorial
 
 ## How to use pyala
 
 1. Define your python function and add type annotations to its input parameters.
-2. Declare new variables with empty annotated assignment to specify their local scope.
+2. Declare new variables with annotated assignment to specify their local scope.
 3. Use one of `pyala.to_str`, `pyala.to_object` or `pyala.to_file` to transpile your code.
 
 ```python
@@ -35,8 +41,8 @@ print(pyala.to_file(foo, goo, filepath='/tmp/Example.scala'))
 ## Examples
 
 ```python
-def foo():
-    y: int
+def foo(x: int):
+    y: int = 0
     if x < 0:
         y = x**2
     else:
