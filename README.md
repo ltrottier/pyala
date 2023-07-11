@@ -180,7 +180,8 @@ In python, `hex(-42)` returns `"-0x2a"`, in scala it returns `"0xffffffd6"`.
 # References
 
 * Python AST: https://docs.python.org/3/library/ast.html
-
+* Built-in Functions: https://docs.python.org/3/library/functions.html
+* Math library: https://docs.python.org/3/library/math.html
 
 
 # Not Supported

@@ -495,6 +495,87 @@ class Transpiler:
             return func_str
         elif func == "__import__":
             raise NotImplementedError(f"{func} is not supported")
+
+        # math library: https://docs.python.org/3/library/math.html
+        elif func == "math.comb":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.copysign":
+            return f"math.copySign({args})"
+        elif func == "math.fabs":
+            return f"math.abs({args})"
+        elif func == "math.factorial":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.fmod":
+            return f"math.floorMod({args})"
+        elif func == "math.frexp":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.fsum":
+            return f"{args}.sum"
+        elif func == "math.gcd":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.isclose":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.isfinite":
+            return f"{args}.isFinite"
+        elif func == "math.isinf":
+            return f"{args}.isInfinite"
+        elif func == "math.isnan":
+            return f"{args}.isNaN"
+        elif func == "math.isqrt":
+            return f"math.floor(math.sqrt({args}))"
+        elif func == "math.lcm":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.ldexp":
+            x, i = args_lst
+            return f"({x} * math.pow(2, {i}))"
+        elif func == "math.modf":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.nextafter":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.perm":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.prod":
+            return f"{args}.product"
+        elif func == "math.remainder":
+            return f"math.IEEEremainder({args})"
+        elif func == "math.trunc":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.exp2":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.log2":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.dist":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.degrees":
+            return f"math.toDegrees({args})"
+        elif func == "math.radians":
+            return f"math.toRadians({args})"
+        elif func == "math.acosh":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.asinh":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.atanh":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.erf":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.erfc":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.gamma":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.lgamma":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.pi":
+            return "math.Pi"
+        elif func == "math.e":
+            return "math.E"
+        elif func == "math.tau":
+            raise NotImplementedError(f"{func} is not supported")
+        elif func == "math.inf":
+            return "scala.Double.PositiveInfinity"
+        elif func == "math.nan":
+            return "scala.Double.NaN"
+
+        # otherwise
         else:
             return f"{func}({args})"
 
